@@ -1,0 +1,86 @@
+#include <DHT.h>
+
+#define DHTPIN 4
+#define DHTTYPE DHT22
+
+DHT dht(DHTPIN, DHTTYPE);
+
+float averageTemperature() {
+  float sum = 0;
+  int count = 0;
+
+  for (int i = 0; i < 5; i++) {
+    float t = dht.readTemperature();
+
+    if (!isnan(t)) {
+      sum += t;
+      count++;
+    }
+
+    delay(100);
+  }
+
+  return count ? sum / count : NAN;
+}
+
+float averageHumidity() {
+  float sum = 0;
+  int count = 0;
+
+  for (int i = 0; i < 5; i++) {
+    float h = dht.readHumidity();
+
+    if (!isnan(h)) {
+      sum += h;
+      count++;
+    }
+
+    delay(100);
+  }
+
+  return count ? sum / count : NAN;
+}
+
+void setup() {
+  Serial.begin(115200);
+  dht.begin();
+}
+
+void loop() {
+  float temperature = averageTemperature();
+  float humidity = averageHumidity();
+
+  Serial.println("========================================");
+  Serial.println("          AGRIPEN ENVIRONMENT");
+  Serial.println("========================================");
+
+  if (isnan(temperature) || isnan(humidity)) {
+    Serial.println("Sensor Status      : ERROR");
+    Serial.println("Temperature        : --");
+    Serial.println("Humidity           : --");
+  } else {
+    Serial.println("Sensor Status      : ONLINE");
+
+    Serial.print("Air Temperature    : ");
+    Serial.print(temperature, 1);
+    Serial.println(" °C");
+
+    Serial.print("Air Humidity       : ");
+    Serial.print(humidity, 1);
+    Serial.println(" %");
+
+    Serial.print("Environment        : ");
+
+    if (temperature >= 35)
+      Serial.println("HOT");
+    else if (temperature >= 25)
+      Serial.println("NORMAL");
+    else
+      Serial.println("COOL");
+  }
+
+  Serial.println("========================================");
+  Serial.println();
+
+  delay(2000);
+}
