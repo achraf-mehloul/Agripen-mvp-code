@@ -1,0 +1,84 @@
+#define SOIL_PIN 34
+
+const int DRY_VALUE = 3200;
+const int WET_VALUE = 1400;
+
+float readSoil() {
+  const int samples = 20;
+  long total = 0;
+
+  for (int i = 0; i < samples; i++) {
+    total += analogRead(SOIL_PIN);
+    delay(20);
+  }
+
+  float raw = total / (float)samples;
+  float moisture = 100.0f * (DRY_VALUE - raw) / (DRY_VALUE - WET_VALUE);
+
+  return constrain(moisture, 0.0f, 100.0f);
+}
+
+void setup() {
+  Serial.begin(115200);
+
+  analogReadResolution(12);
+  analogSetPinAttenuation(SOIL_PIN, ADC_11db);
+
+  Serial.println();
+  Serial.println("========================================");
+  Serial.println("           AGRIPEN SOIL SENSOR");
+  Serial.println("========================================");
+  Serial.println("System Status     : ONLINE");
+  Serial.println("Sensor            : HW-080");
+  Serial.println("ADC Resolution    : 12-bit");
+  Serial.println("========================================");
+}
+
+void loop() {
+  int raw = 0;
+
+  for (int i = 0; i < 20; i++) {
+    raw += analogRead(SOIL_PIN);
+    delay(20);
+  }
+
+  raw /= 20;
+
+  float moisture = 100.0f * (DRY_VALUE - raw) / (DRY_VALUE - WET_VALUE);
+  moisture = constrain(moisture, 0.0f, 100.0f);
+
+  String status;
+
+  if (moisture <= 20)
+    status = "VERY DRY";
+  else if (moisture <= 40)
+    status = "DRY";
+  else if (moisture <= 70)
+    status = "OPTIMAL";
+  else if (moisture <= 85)
+    status = "MOIST";
+  else
+    status = "VERY WET";
+
+  Serial.println("========================================");
+  Serial.println("           AGRIPEN SOIL DATA");
+  Serial.println("========================================");
+
+  Serial.print("Sensor Status     : ONLINE");
+  Serial.println();
+
+  Serial.print("Raw ADC Value     : ");
+  Serial.println(raw);
+
+  Serial.print("Soil Moisture     : ");
+  Serial.print(moisture, 1);
+  Serial.println(" %");
+
+  Serial.print("Soil Condition    : ");
+  Serial.println(status);
+
+  Serial.println("========================================");
+  Serial.println();
+
+  delay(2000);
+}
