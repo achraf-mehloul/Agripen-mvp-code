@@ -1,65 +1,53 @@
-#define SOIL_PIN 34
+#define SOIL_ANALOG_PIN 34
+#define SOIL_DIGITAL_PIN 27
 
-const int DRY_VALUE = 3200;
-const int WET_VALUE = 1400;
-
-float readSoil() {
-  const int samples = 20;
-  long total = 0;
-
-  for (int i = 0; i < samples; i++) {
-    total += analogRead(SOIL_PIN);
-    delay(20);
-  }
-
-  float raw = total / (float)samples;
-  float moisture = 100.0f * (DRY_VALUE - raw) / (DRY_VALUE - WET_VALUE);
-
-  return constrain(moisture, 0.0f, 100.0f);
-}
+const int SAMPLES = 50;
 
 void setup() {
   Serial.begin(115200);
 
   analogReadResolution(12);
-  analogSetPinAttenuation(SOIL_PIN, ADC_11db);
+  analogSetPinAttenuation(SOIL_ANALOG_PIN, ADC_11db);
+
+  pinMode(SOIL_DIGITAL_PIN, INPUT);
 
   Serial.println();
   Serial.println("========================================");
-  Serial.println("           AGRIPEN SOIL SENSOR");
+  Serial.println("          AGRIPEN SOIL SENSOR");
   Serial.println("========================================");
   Serial.println("System Status     : ONLINE");
   Serial.println("Sensor            : HW-080");
+  Serial.println("Analog Pin        : GPIO 34");
+  Serial.println("Digital Pin       : GPIO 27");
   Serial.println("ADC Resolution    : 12-bit");
   Serial.println("========================================");
 }
 
 void loop() {
-  int raw = 0;
+  long total = 0;
+  int minimum = 4095;
+  int maximum = 0;
 
-  for (int i = 0; i < 20; i++) {
-    raw += analogRead(SOIL_PIN);
-    delay(20);
+  for (int i = 0; i < SAMPLES; i++) {
+    int value = analogRead(SOIL_ANALOG_PIN);
+
+    total += value;
+
+    if (value < minimum)
+      minimum = value;
+
+    if (value > maximum)
+      maximum = value;
+
+    delay(10);
   }
 
-  raw /= 20;
+  float average = total / (float)SAMPLES;
+  float voltage = (average / 4095.0f) * 3.3f;
 
-  float moisture = 100.0f * (DRY_VALUE - raw) / (DRY_VALUE - WET_VALUE);
-  moisture = constrain(moisture, 0.0f, 100.0f);
+  int digitalState = digitalRead(SOIL_DIGITAL_PIN);
 
-  String status;
-
-  if (moisture <= 20)
-    status = "VERY DRY";
-  else if (moisture <= 40)
-    status = "DRY";
-  else if (moisture <= 70)
-    status = "OPTIMAL";
-  else if (moisture <= 85)
-    status = "MOIST";
-  else
-    status = "VERY WET";
-
+  Serial.println();
   Serial.println("========================================");
   Serial.println("           AGRIPEN SOIL DATA");
   Serial.println("========================================");
@@ -67,18 +55,27 @@ void loop() {
   Serial.print("Sensor Status     : ONLINE");
   Serial.println();
 
-  Serial.print("Raw ADC Value     : ");
-  Serial.println(raw);
+  Serial.print("Raw ADC Average   : ");
+  Serial.println(average, 0);
 
-  Serial.print("Soil Moisture     : ");
-  Serial.print(moisture, 1);
-  Serial.println(" %");
+  Serial.print("Raw ADC Minimum   : ");
+  Serial.println(minimum);
 
-  Serial.print("Soil Condition    : ");
-  Serial.println(status);
+  Serial.print("Raw ADC Maximum   : ");
+  Serial.println(maximum);
+
+  Serial.print("Analog Voltage    : ");
+  Serial.print(voltage, 3);
+  Serial.println(" V");
+
+  Serial.print("Digital Output    : ");
+
+  if (digitalState == LOW)
+    Serial.println("WET");
+  else
+    Serial.println("DRY");
 
   Serial.println("========================================");
-  Serial.println();
 
-  delay(2000);
+  delay(1500);
 }
