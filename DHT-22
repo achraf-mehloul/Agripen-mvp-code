@@ -5,6 +5,87 @@
 
 DHT dht(DHTPIN, DHTTYPE);
 
+float readTemperature() {
+  float temperature = dht.readTemperature();
+
+  if (isnan(temperature)) {
+    return NAN;
+  }
+
+  return temperature;
+}
+
+float readHumidity() {
+  float humidity = dht.readHumidity();
+
+  if (isnan(humidity)) {
+    return NAN;
+  }
+
+  return humidity;
+}
+
+void setup() {
+  Serial.begin(115200);
+  dht.begin();
+
+  delay(2000);
+
+  Serial.println();
+  Serial.println("========================================");
+  Serial.println("          AGRIPEN ENVIRONMENT");
+  Serial.println("========================================");
+  Serial.println("System Status      : ONLINE");
+  Serial.println("Sensor             : DHT22");
+  Serial.println("GPIO               : 4");
+  Serial.println("========================================");
+}
+
+void loop() {
+  float temperature = readTemperature();
+  float humidity = readHumidity();
+
+  Serial.println();
+  Serial.println("========================================");
+  Serial.println("          AGRIPEN ENVIRONMENT");
+  Serial.println("========================================");
+
+  if (isnan(temperature) || isnan(humidity)) {
+    Serial.println("Sensor Status      : ERROR");
+    Serial.println("Temperature        : --");
+    Serial.println("Humidity           : --");
+  } 
+  else {
+    Serial.println("Sensor Status      : ONLINE");
+
+    Serial.print("Air Temperature    : ");
+    Serial.print(temperature, 1);
+    Serial.println(" °C");
+
+    Serial.print("Air Humidity       : ");
+    Serial.print(humidity, 1);
+    Serial.println(" %");
+
+    Serial.print("Environment        : ");
+
+    if (temperature >= 35.0)
+      Serial.println("HOT");
+    else if (temperature >= 25.0)
+      Serial.println("NORMAL");
+    else
+      Serial.println("COOL");
+  }
+
+  Serial.println("========================================");
+
+  delay(2500);
+}#include <DHT.h>
+
+#define DHTPIN 4
+#define DHTTYPE DHT22
+
+DHT dht(DHTPIN, DHTTYPE);
+
 float averageTemperature() {
   float sum = 0;
   int count = 0;
